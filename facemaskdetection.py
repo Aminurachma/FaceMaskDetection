@@ -5,7 +5,8 @@ from tensorflow.keras.models import load_model
 from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 import numpy as np
  
-cascPath = "haarcascade_frontalface_alt2.xml"
+ #Library Viola Jones  Tinggal mempelajari kan wkwkwk
+cascPath = "haarcascade_frontalface_alt2.xml" 
 faceCascade = cv2.CascadeClassifier(cascPath)
 model = load_model("mask_recog_ver2.h5")
  
