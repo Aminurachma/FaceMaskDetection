@@ -9,6 +9,7 @@ import numpy as np
 cascPath = "haarcascade_frontalface_alt2.xml" 
 faceCascade = cv2.CascadeClassifier(cascPath)
 model = load_model("mask_recog_ver2.h5")
+#model = load_model("modelmaskdetection.h5")
  
 video_capture = cv2.VideoCapture(0)
 while True:
@@ -34,15 +35,15 @@ while True:
             preds = model.predict(faces_list)
         for pred in preds:
             (mask, withoutMask) = pred
-        label = "Mask" if mask > withoutMask else "No Mask"
-        color = (0, 255, 0) if label == "Mask" else (0, 0, 255)
+        label = "Menggunakan Masker" if mask > withoutMask else "Tidak Menggunakan Masker"
+        color = (0, 255, 0) if label == "Menggunakan Masker" else (0, 0, 255)
         label = "{}: {:.2f}%".format(label, max(mask, withoutMask) * 100)
         cv2.putText(frame, label, (x, y- 10),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.45, color, 2)
  
         cv2.rectangle(frame, (x, y), (x + w, y + h),color, 2)
         # Display the resulting frame
-    cv2.imshow('Video', frame)
+    cv2.imshow('Video Pendeteksi Wajah Bermasker', frame)
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 video_capture.release()
