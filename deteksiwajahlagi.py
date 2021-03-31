@@ -29,9 +29,37 @@ while 1:
     ret, img = cap.read()
     img = cv2.flip(img,1)
 
+  
+    
+    #nilai biru pada HSV
+    #lower_blue = np.array([20,0,0])
+    #upper_blue = np.array([40,255,255])
+    
+    #Konversi RGB ke HSV
+    #hsv = cv2.cvtColor(img,cv2.COLOR_BGR2HSV)
+
+     #Threshold gambar hsv untuk hanya mendapatkan nilai biru saja
+    #mask = cv2.inRange(hsv,lower_blue,upper_blue)
+    #dibitwise
+    #res = cv2.bitwise_and(img,img,mask=mask)
+
+    
+    #cv2.imshow('frame',img)
+    #cv2.imshow('mask',mask)
+    #cv2.imshow('res',res)
+
+    # Resize Gambar menjadi 340 x 240
+    resize = cv2.resize(img, (340, 240))
+    #cv2.imshow('Resize', resize)
+
     # Convert Gambar menjadi Gray Scale
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     #cv2.imshow('Greyscale', gray)
+
+    blur = cv2.GaussianBlur(gray, (5, 5), 0)
+    canny = cv2.Canny(blur, 10, 70)
+    ret, mask = cv2.threshold(canny, 70, 255, cv2.THRESH_BINARY)
+    #cv2.imshow('Video feed', mask)
 
     # Convert image ke hitam dan putih
     (thresh, black_and_white) = cv2.threshold(gray, bw_threshold, 255, cv2.THRESH_BINARY)
