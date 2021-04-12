@@ -1,26 +1,31 @@
-import numpy as np
+import sys
+import os
+from tkinter import *
 import cv2
+import tkinter.filedialog as tkFileDialog
 
-img=cv2.imread("abba.png",0)
+window=Tk()
 
-def nothing(x):
-  pass
+window.title("FaceMask Detection")
+window.geometry('350x200')
 
-cv2.namedWindow('image')
+def run():
+    os.system('SkripsiAmi.py')
+	
+def run2():
+    path = tkFileDialog.askopenfilename()
+    # pastikan path file telah dipilih
+    if len(path) > 0:
+        image = cv2.imread(path)
+    os.system('SkripsiAmiUpload.py '+ path)
+ 
+label = Label(text="FACE MASK DETECTION WITH VIOLA JONES METHOD", fg="white", bg="black")
+label.pack(side="top", fill="both", expand="yes", padx="10", pady="10")
 
-cv2.createTrackbar('min','image',0,255,nothing)
-cv2.createTrackbar('max','image',0,255,nothing)
+btn = Button(window, text="Face Mask Detection with Webcam", command=run)
+btn.pack(side="bottom", fill="both", expand="yes", padx="10", pady="10")
 
-while(1):
+btns = Button(window, text="Face Mask Detection with Upload File", command=run2)
+btns.pack(side="bottom", fill="both", expand="yes", padx="10", pady="10")
 
- a = cv2.getTrackbarPos('min','image')
- b = cv2.getTrackbarPos('max','image')
- ret,thresh=cv2.threshold(img,a,b,cv2.THRESH_BINARY_INV)
- cv2.imshow("output",thresh)
- k = cv2.waitKey(10) & 0xFF
- if k == 27:
-    break
-
-x= cv2.countNonZero(thresh)
-cv2.imshow('x',x)
-cv2.destroyAllWindows()
+window.mainloop()

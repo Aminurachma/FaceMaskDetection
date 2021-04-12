@@ -100,33 +100,33 @@ while 1:
 
 
             #Konversi RGB ke HSV
-            #hsv = cv2.cvtColor(images,cv2.COLOR_BGR2HSV)
+            hsv = cv2.cvtColor(images,cv2.COLOR_BGR2HSV)
             # Parameter HSV
-            #lower_b = np.array([0, 10, 62])
-            #upper_b = np.array([26, 255, 255])
+            lower_b = np.array([0, 10, 62])
+            upper_b = np.array([26, 255, 255])
 
             # membuat mask HSV hasil dari pengubahan HSV
-            #mask_new = cv2.inRange(hsv, lower_b, upper_b)
-            #cv2.imshow('Mask', mask_new)
+            mask_new = cv2.inRange(hsv, lower_b, upper_b)
+            cv2.imshow('Mask', mask_new)
 
             
             # convert image to binary
-            #gray = cv2.cvtColor(roi_gray, cv2.COLOR_BGR2GRAY)
-            #_, im_th = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY)
-            #th_binary = im_th.copy()
+            gray = cv2.cvtColor(images, cv2.COLOR_BGR2GRAY)
+            _, im_th = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY)
+            th_binary = im_th.copy()
             # Invert floodfilled image
-            #th_binary_inv = cv2.bitwise_not(th_binary)
+            th_binary_inv = cv2.bitwise_not(th_binary)
             # Combine the two images to get the foreground.
 
-            #im_out = mask_new | th_binary_inv
+            im_out = mask_new | th_binary_inv
             # -----------------------imfill-------------------------
-            #contours, hierarchy = cv2.findContours(mask_new, cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
-            #for contour in contours:
-            #    area = cv2.contourArea(contour)
-            #    if area > 10:
-            #        cv2.drawContours(im_out, [contour], 0, 255, -1)# untuk menambal hole / sebagai imfill
-            #    result_new = cv2.bitwise_and(images, images, mask=im_out)
-            #cv2.imshow('Masking', result_new)
+            contours, hierarchy = cv2.findContours(mask_new, cv2.RETR_LIST,cv2.CHAIN_APPROX_NONE)
+            for contour in contours:
+                area = cv2.contourArea(contour)
+                if area > 10:
+                    cv2.drawContours(im_out, [contour], 0, 255, -1)# untuk menambal hole / sebagai imfill
+                result_new = cv2.bitwise_and(images, images, mask=im_out)
+            cv2.imshow('Masking', result_new)
 
             # Deteksi mulut
             mouth_rects = mouth_cascade.detectMultiScale(gray, 1.5, 5)
@@ -166,7 +166,6 @@ while 1:
     # Parameter HSV
     #lower_b = np.array([0, 10, 62])
     #upper_b = np.array([26, 255, 255])
-
     # membuat mask HSV hasil dari pengubahan HSV
     #mask_new = cv2.inRange(hsv, lower_b, upper_b)
     #cv2.imshow('Mask', mask_new)
