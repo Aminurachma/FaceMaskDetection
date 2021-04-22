@@ -1,32 +1,52 @@
 import cv2
 import numpy as np
-from matplotlib import pyplot as plt
+# Load two images
+img1 = cv2.imread('ok.jpeg')
+img2 = cv2.imread('jeruk.jpg')
+#Now we want to remove the white background of the mainlogo and then place it on the top left of the 3D-Matplotlib (top coordinate's are (0,0)) So we will first find the coordinates y,x,channel of the mainlogo and then use it to reserve a region in ROI of 3D-Matplotlib image
+#The shape of an image numpy array matrix tells us about its rows,coloumns and channels
+#So uf we do img.shape we will get a tuple in return 
+#And if find length of that tuple we will get the dimension the same answer using img.ndim
+#So if we want to find value of no of rows ,coloumns and channels and store them in a value use
+#row,colomns,channels=img.shape
+rows,cols,channels = img2.shape
+#So we found the area of img2
+#Now we begin with the coordinate where we wannt to fit the image as [y,y+rows:x,x+cols] and here from (0,0) ,so
+roi = img1[0:rows, 0:cols ]
+#Now made a region in image1 
+#Now we need to create a mask of the logo, mask is conversion to grayscale of an image
+img2gray = cv2.cvtColor(img2,cv2.COLOR_BGR2GRAY) #color of image 2 converted to gray
+#Now the image has a white background and rest thing we want to use and we dont need that white background so we select a threshold value say 220 generally things are white at this point and become more white till 255, if the background will have been yellow, we should have converted to gray so no need to worry about bckgrnd color coz we always convrt to gray .So we use the threshold value 220
+ret, mask = cv2.threshold(img2gray, 220, 255, cv2.THRESH_BINARY_INV)
+#img2gray pixel whose value is above 220 is converted to 255 and whose value is below 220 is converted to black,after this we get a image and then invert the color 
+#cv2.imshow("threshold inverted",mask) #To see the inverted image comment out
+#now simply just create inverted image of mask
+mask_inv = cv2.bitwise_not(mask)
+#mask_inv=255-mask both are true 
 
-img = cv2.imread('coin.jpg',0)
+"""
+Concept Story : NOw we need to add both the img1 and img2 by overlaying them, the basic concept behind this is the value of color black i.e. 0 in open cv.So black+ anycolor= anycolor because value of black is 0.
+Now we need to add the logo to img1.So lets make logo as foreground and img1 as background.
+So let logo be comprised of mainlogo(the python region)+ rest black color
+      and img1 be comprised of region where logo will be added (it will be black) + rest the img1 region
+So that when we add both the mainlogo of logo will combine with the black region of img1 and form logo,and the black region of logo combine with the rest of img1.And thus we will obtain our ROI
+"""
 
-# global thresholding
-ret1,th1 = cv2.threshold(img,127,255,cv2.THRESH_BINARY)
 
-# Otsu's thresholding
-ret2,th2 = cv2.threshold(img,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+cv2.imshow("mask_inv",mask_inv)
+# Now black-out the area of logo in ROI
+img1_bg = cv2.bitwise_and(roi,roi,mask = mask_inv)
+cv2.imshow("img1_bg",img1_bg)
+# Take only region of logo from logo image.
+img2_fg = cv2.bitwise_and(img2,img2,mask = mask)
+cv2.imshow("img2_fg",img2_fg)
+# Put logo in ROI and modify the main image
+dst = cv2.add(img1_bg,img2_fg)
+#modify main image
+img1[0:rows, 0:cols ] = dst
+cv2.imshow('res',img1)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
 
-# Otsu's thresholding after Gaussian filtering
-blur = cv2.GaussianBlur(img,(5,5),0)
-ret3,th3 = cv2.threshold(blur,0,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
-
-# plot all the images and their histograms
-images = [img, 0, th1,
-          img, 0, th2,
-          blur, 0, th3]
-titles = ['Original Noisy Image','Histogram','Global Thresholding (v=127)',
-          'Original Noisy Image','Histogram',"Otsu's Thresholding",
-          'Gaussian filtered Image','Histogram',"Otsu's Thresholding"]
-
-for i in range(3):
-    plt.subplot(3,3,i*3+1),plt.imshow(images[i*3],'gray')
-    plt.title(titles[i*3]), plt.xticks([]), plt.yticks([])
-    plt.subplot(3,3,i*3+2),plt.hist(images[i*3].ravel(),256)
-    plt.title(titles[i*3+1]), plt.xticks([]), plt.yticks([])
-    plt.subplot(3,3,i*3+3),plt.imshow(images[i*3+2],'gray')
-    plt.title(titles[i*3+2]), plt.xticks([]), plt.yticks([])
-plt.show()
+cv2.waitKey(0)
+cv2.destroyAllWindows()

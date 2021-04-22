@@ -1,79 +1,78 @@
-import PIL
-from PIL import Image,ImageTk
-import pytesseract
+# USAGE
+# python detect_age.py --image images/adrian.png --face face_detector --age age_detector
+ 
+# import the necessary packages
+import numpy as np
 import cv2
-from tkinter import *
-from PIL import Image
-from PIL import ImageTk
-import tkinter.filedialog as tkFileDialog
-
-width, height = 800, 600
-cap = cv2.VideoCapture(0)
-cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-
-root = Tk()
-
-panelA = None
-panelB = None
-root.bind('<Escape>', lambda e: root.quit())
-lmain = Label(root)
-lmain.pack()
-
-
-def select_image():
-	# grab a reference to the image panels
-	global panelA, panelB
-	# open a file chooser dialog and allow the user to select an input
-	# image
-	path = tkFileDialog.askopenfilename()
-  # ensure a file path was selected
-	if len(path) > 0:
-		# load the image from disk, convert it to grayscale, and detect
-		# edges in it
-		image = cv2.imread(path)
-		gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-		edged = cv2.Canny(gray, 50, 100)
-		# OpenCV represents images in BGR order; however PIL represents
-		# images in RGB order, so we need to swap the channels
-		image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-		# convert the images to PIL format...
-		image = Image.fromarray(image)
-		edged = Image.fromarray(edged)
-		# ...and then to ImageTk format
-		image = ImageTk.PhotoImage(image)
-		edged = ImageTk.PhotoImage(edged)
-
-    		# if the panels are None, initialize them
-		if panelA is None or panelB is None:
-			# the first panel will store our original image
-			panelA = Label(image=image)
-			panelA.image = image
-			panelA.pack(side="left", padx=10, pady=10)
-			# while the second panel will store the edge map
-			panelB = Label(image=edged)
-			panelB.image = edged
-			panelB.pack(side="right", padx=10, pady=10)
-		# otherwise, update the image panels
-		else:
-			# update the pannels
-			panelA.configure(image=image)
-			panelB.configure(image=edged)
-			panelA.image = image
-			panelB.image = edged
-
-def show_frame():
-    _, frame = cap.read()
-    frame = cv2.flip(frame, 1)
-    cv2image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGBA)
-    img = PIL.Image.fromarray(cv2image)
-    imgtk = ImageTk.PhotoImage(image=img)
-    lmain.imgtk = imgtk
-    lmain.configure(image=imgtk)
-    lmain.after(10, show_frame)
-
-btn = Button(root, text="Select an image", command=select_image)
-btn.pack(side="bottom", fill="both", expand="yes", padx="10", pady="10")
-btns = Button(root, text="Open webcam", command=show_frame)
-btns.pack(side="bottom", fill="both", expand="yes", padx="10", pady="10")
-root.mainloop()
+import os
+ 
+# construct the argument parse and parse the arguments
+# define the list of age buckets our age detector will predict
+AGE_BUCKETS = ["(0-2)", "(4-6)", "(8-12)", "(15-20)", "(25-32)",
+	"(38-43)", "(48-53)", "(60-100)"]
+ 
+# memuat model pendeteksi wajah
+prototxtPath = ("face_detector/deploy.prototxt")
+weightsPath = (
+	"face_detector/res10_300x300_ssd_iter_140000.caffemodel")
+faceNet = cv2.dnn.readNet(prototxtPath, weightsPath)
+ 
+prototxtPath = ("age_detector/age_deploy.prototxt")
+weightsPath = ("age_detector/age_net.caffemodel")
+ageNet = cv2.dnn.readNet(prototxtPath, weightsPath)
+ 
+# load the input image and construct an input blob for the image
+image = cv2.imread("foto.jpg")
+(h, w) = image.shape[:2]
+blob = cv2.dnn.blobFromImage(image, 1.0, (300, 300),
+	(104.0, 177.0, 123.0))
+ 
+# pass the blob through the network and obtain the face detections
+print("[INFO] computing face detections...")
+faceNet.setInput(blob)
+detections = faceNet.forward()
+ 
+# loop over the detections
+for i in range(0, detections.shape[2]):
+	# extract the confidence (i.e., probability) associated with the
+	# prediction
+	confidence = detections[0, 0, i, 2]
+ 
+	# filter out weak detections by ensuring the confidence is
+	# greater than the minimum confidence
+	if confidence > 0.5:
+		# compute the (x, y)-coordinates of the bounding box for the
+		# object
+		box = detections[0, 0, i, 3:7] * np.array([w, h, w, h])
+		(startX, startY, endX, endY) = box.astype("int")
+ 
+		# extract the ROI of the face and then construct a blob from
+		# *only* the face ROI
+		face = image[startY:endY, startX:endX]
+		faceBlob = cv2.dnn.blobFromImage(face, 1.0, (227, 227),
+			(78.4263377603, 87.7689143744, 114.895847746),
+			swapRB=False)
+ 
+		# make predictions on the age and find the age bucket with
+		# the largest corresponding probability
+		ageNet.setInput(faceBlob)
+		preds = ageNet.forward()
+		i = preds[0].argmax()
+		age = AGE_BUCKETS[i]
+		ageConfidence = preds[0][i]
+ 
+		# display the predicted age to our terminal
+		text = "{}: {:.2f}%".format(age, ageConfidence * 100)
+		print("[INFO] {}".format(text))
+ 
+		# draw the bounding box of the face along with the associated
+		# predicted age
+		y = startY - 10 if startY - 10 > 10 else startY + 10
+		cv2.rectangle(image, (startX, startY), (endX, endY),
+			(0, 0, 255), 2)
+		cv2.putText(image, text, (startX, y),
+			cv2.FONT_HERSHEY_SIMPLEX, 0.45, (0, 0, 255), 2)
+ 
+# display the output image
+cv2.imshow("Image", image)
+cv2.waitKey(0)

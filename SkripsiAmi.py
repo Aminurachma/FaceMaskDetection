@@ -1,7 +1,8 @@
+# Import Library
 import numpy as np
 import cv2 
 
-#Library dari OpenCV = Viola Jones
+# Library dari OpenCV = Viola Jones
 face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_alt2.xml')
 mouth_cascade = cv2.CascadeClassifier('haarcascade_mcs_mouth.xml')
 eye_cascade = cv2.CascadeClassifier('haarcascade_eye.xml')
@@ -31,13 +32,16 @@ while 1:
     ret, img = cap.read()
     img = cv2.flip(img,1)
 
+    # Menampilkan Hasil Citra Asli Webca
+    cv2.imshow('Citra Asli Webcam', img)
+    
     # Resize Gambar menjadi 340 x 240
     images = cv2.resize(img, (340, 240))
-    #cv2.imshow('Resize', resize)
+    cv2.imshow('Citra hasil Resize', images)
 
     # Convert Gambar menjadi Gray Scale
     gray = cv2.cvtColor(images, cv2.COLOR_BGR2GRAY)
-    #cv2.imshow('Greyscale', gray)
+    cv2.imshow('Citra Greyscale', gray)
 
     # Deteksi tepi dengan GaussianBlur dan Canny
     blur = cv2.GaussianBlur(gray, (5, 5), 0)
@@ -64,42 +68,68 @@ while 1:
     # Mendeteksi wajah untuk hitam dan putih
     faces_bw = face_cascade.detectMultiScale(black_and_white, 1.1, 5)
 
-
+    # Untuk mendeteksi wajah #
     if(len(faces) == 0 and len(faces_bw) == 0):
-        cv2.putText(images, "Tidak Menemukan Wajah...", org, font, font_scale, weared_mask_font_color, thickness, cv2.LINE_AA)
+        cv2.putText(images, "Tidak Menemukan Wajah...", (95,172), font, 0.4, (255,255,255), thickness, cv2.LINE_AA)
+    # Untuk mendeteksi wajah yang menggunakan masker putih #
     elif(len(faces) == 0 and len(faces_bw) == 1):
-        # It has been observed that for white mask covering mouth, with gray image face prediction is not happening
         cv2.putText(images, weared_mask, org, font, font_scale, weared_mask_font_color, thickness, cv2.LINE_AA)
     else:
-        # Menggambar kotak di area wajah
+        # Menggambar kotak di area wajah untuk melihat wajah yang terdeteksi
         for (x, y, w, h) in faces:
-            #color = (0, 255, 0)(0, 0, 255) if (len(faces) == 0 and len(faces_bw) == 1) else (0, 0, 255)
-            #label = "Menggunakan Masker" if (len(faces_bw) ==  1 and len(mouth_rects) == 0) else "Tidak Menggunakan Masker"
-            #cv2.putText(img, weared_mask, (x, y- 10), font, font_scale, weared_mask_font_color, thickness, cv2.LINE_AA)
-            
             cv2.rectangle(images, (x, y), (x + w, y + h), (0, 255, 0), 2)
-            kotak_gray = gray[y:y + h, x:x + w]
-            kotak_color = images[y:y + h, x:x + w]
-
-            #cv2.imshow('roi',kotak_gray)
-            #Didalam kotak dimasukan ke variabel.. jika rec2 x citra asli 
-            #dibelakang frame item aja, dibinerkan dikali dengan yang citra asli.. agar nilanya 0 masking
-
             
+            # Hasil piksel dari kotak didalam wajah dalam citra greyscale
+            kotak_gray = gray[y:y + h, x:x + w]
+            #kotak_color = images[y:y + h, x:x + w]
+            
+            # Menampilkan citra yang terdeteksi sebagai wajah      
+            cv2.imshow('Citra deteksi Wajah', images)          
+            
+            # Menghitung jumlah wajah yang terdeteksi
+            wajah = (len(faces))
+        
             # Membuat masking dengan zeros
             mask = np.zeros((images.shape[:2]), dtype=np.uint8)
-            
-            #Membuat Rectangle untuk menampilkan wajah
+
+        print("Jumlah wajah ada",wajah)
+           
+        for (x, y, w, h) in faces: 
+            # Membuat Rectangle untuk menampilkan wajah
             cv2.rectangle(mask, (x, y), (x + w, y + h), (255,255,255), -1)
             #cv2.imshow("Rectangular Mask", mask)
 
-            mask2 = np.where((mask==2)|(mask==0),0,1).astype('uint8')
-            images = images*mask2[:,:,np.newaxis]
-
             #Menerapkan masking ke gambar
-            #masked = cv2.bitwise_and(images, images, mask=mask)
-            #cv2.imshow("Mask Applied to Image", masked)
+            masked = cv2.bitwise_and(images, images, mask=mask)
+            cv2.imshow("Mask Applied to Image", masked)
+
+            #Konversi RGB ke HSV
+            hsv = cv2.cvtColor(images,cv2.COLOR_BGR2HSV)
+
+            # Parameter HSV
+            lower_b = np.array([0, 10, 62])
+            upper_b = np.array([26, 255, 255])
+
+            # membuat mask HSV hasil dari pengubahan HSV
+            mask_new = cv2.inRange(hsv, lower_b, upper_b)
+            cv2.imshow('Mask', mask_new)
+
             
+            #Menghitung seluruh jumlah pixel
+            countpixel = np.sum(np.array(images) >= 200)
+            #print('Number of pixels:', countpixel)
+
+            #Menghitung pixel warna putih
+            white_pixel = np.sum(images == 255)
+            #print('Number of white pixels:', white_pixel)
+
+            #Menghitung pixel warna hitam
+            black_pixel = np.sum(images == 0)
+            print('Number black of pixels:', black_pixel)
+
+            #mask2 = np.where((mask==1)|(mask==0),0,1).astype('uint8')
+            #images = images*mask2[:,:,np.newaxis]         
+                        
             # Deteksi mulut
             mouth_rects = mouth_cascade.detectMultiScale(gray, 1.5, 5)
             
@@ -107,31 +137,25 @@ while 1:
             nose_detect = nose_cascade.detectMultiScale(gray, 1.5, 5)
 
             
-        # Wajah terdeteksi tetapi mulut dan hidung tidak terdeteksi yang berarti orang tersebut memakai masker
-       
-        if(len(mouth_rects) == 0 and len(nose_detect) == 0):
-            cv2.putText(images, weared_mask, (x, y- 10), font, font_scale, weared_mask_font_color, thickness, cv2.LINE_AA)         
-        #elif(len(nose_detect) != 0):
-        #   cv2.putText(images, not_weared_mask, (x, y- 10), font, font_scale, not_weared_mask_font_color, thickness, cv2.LINE_AA)
-        #elif(len(mouth_rects) != 0):
-        #   cv2.putText(images, not_weared_mask, (x, y- 10), font, font_scale, not_weared_mask_font_color, thickness, cv2.LINE_AA)
-       
-        else:
-            for (mx, my, mw, mh) in mouth_rects:
+            # Wajah terdeteksi tetapi mulut dan hidung tidak terdeteksi yang berarti orang tersebut memakai masker
+            if(len(mouth_rects) == 0 and len(nose_detect) == 0 and black_pixel >= 1000):
+                cv2.putText(images, weared_mask, (x, y- 10), font, font_scale, weared_mask_font_color, thickness, cv2.LINE_AA)         
+                
+            else:
+                for (mx, my, mw, mh) in mouth_rects:
 
-                if(y < my < y + h):
-                    # Wajah dan Bibir terdeteksi tetapi koordinat mulut dan hidug berada dalam koordinat wajah yang 
-                    # berarti prediksi bibir benar dan orang tidak memakai masker.
-                    cv2.putText(images, not_weared_mask, (x, y- 10), font, font_scale, not_weared_mask_font_color, thickness, cv2.LINE_AA)
+                    if(y < my < y + h):
+                        # Wajah dan Bibir terdeteksi tetapi koordinat mulut dan hidug berada dalam koordinat wajah yang 
+                        # berarti prediksi bibir benar dan orang tidak memakai masker.
+                        cv2.putText(images, not_weared_mask, (x, y- 10), font, font_scale, not_weared_mask_font_color, thickness, cv2.LINE_AA)
 
-                    #cv2.rectangle(img, (mx, my), (mx + mh, my + mw), (0, 0, 255), 3)
-                    break
+                        #cv2.rectangle(img, (mx, my), (mx + mh, my + mw), (0, 0, 255), 3)
+                        break
 
-            cv2.rectangle(images, (x, y), (x + w, y + h),(0, 0, 255), 2)
-                    
+                cv2.rectangle(images, (x, y), (x + w, y + h),(0, 0, 255), 2)
                     
           
-    # Menampilkan hasil deteksi
+    # Menampilkan hasil Akhir Deteksi
     cv2.imshow('Aminurachma: Mask Detection', images)
     if cv2.waitKey(1) & 0xff == ord('q'):
         break

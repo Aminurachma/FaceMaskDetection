@@ -154,7 +154,7 @@ while 1:
                     
                     
     #Konversi RGB ke HSV
-    #hsv = cv2.cvtColor(images,cv2.COLOR_BGR2HSV)
+    hsv = cv2.cvtColor(images,cv2.COLOR_BGR2HSV)
   #Segmentasi untuk masking
     #mask1= cv2.inRange()
     #mask = cv2.inRange(hsv,mouth_detect,nose_detect)
@@ -164,11 +164,11 @@ while 1:
     # load the image, convert it to grayscale
 
     # Parameter HSV
-    #lower_b = np.array([0, 10, 62])
-    #upper_b = np.array([26, 255, 255])
+    lower_b = np.array([0, 10, 62])
+    upper_b = np.array([26, 255, 255])
     # membuat mask HSV hasil dari pengubahan HSV
-    #mask_new = cv2.inRange(hsv, lower_b, upper_b)
-    #cv2.imshow('Mask', mask_new)
+    mask_new = cv2.inRange(hsv, lower_b, upper_b)
+    cv2.imshow('Mask', mask_new)
 
       
     # Show frame with results
