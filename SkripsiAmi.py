@@ -34,10 +34,13 @@ while 1:
 
     # Menampilkan Hasil Citra Asli Webca
     cv2.imshow('Citra Asli Webcam', img)
+    print("Ukuran Citra Asli = ",img.shape)
     
     # Resize Gambar menjadi 340 x 240
     images = cv2.resize(img, (340, 240))
     cv2.imshow('Citra hasil Resize', images)
+    print("Ukuran Citra Setelah di resize = ",images.shape)
+    
 
     # Convert Gambar menjadi Gray Scale
     gray = cv2.cvtColor(images, cv2.COLOR_BGR2GRAY)
@@ -157,6 +160,7 @@ while 1:
           
     # Menampilkan hasil Akhir Deteksi
     cv2.imshow('Aminurachma: Mask Detection', images)
+    print("======================================================")
     if cv2.waitKey(1) & 0xff == ord('q'):
         break
 

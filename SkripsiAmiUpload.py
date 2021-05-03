@@ -42,6 +42,7 @@ height = int(img.shape[0] * scale_percent / 100)
 dim = (width, height)
 images = cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
 cv2.imshow('Citra hasil Resize', images)
+print("Ukuran Citra setelah di resize = ",images.shape)
 # cv2.imwrite('hasilresize2.png', images)
 
 # Konversi citra ke citra Gray Scale
@@ -76,7 +77,7 @@ faces_bw = face_cascade.detectMultiScale(black_and_white, 1.1, 5)
 # Untuk mendeteksi wajah
 if(len(faces) == 0 and len(faces_bw) == 0):
     cv2.putText(images, "Tidak Menemukan Wajah...", (95,172), font, 0.4, (255,255,255), thickness, cv2.LINE_AA)
-
+    print("Tidak Menemukan Wajah")
 # Untuk mendeteksi wajah yang menggunakan masker putih 
 elif(len(faces) == 0 and len(faces_bw) == 1):
     cv2.putText(images, weared_mask, org, font, font_scale, weared_mask_font_color, thickness, cv2.LINE_AA)
@@ -154,6 +155,7 @@ else:
         # Wajah terdeteksi tetapi mulut dan hidung tidak terdeteksi yang berarti orang tersebut memakai masker
         if(len(mouth_rects) == 0 and len(nose_detect) == 0 or black_pixel >= 200):
             label = "Menggunakan Masker"
+            print(label)
             cv2.rectangle(images, (x, y), (x + w, y + h), (0, 255, 0), 2)
             cv2.putText(images, label, (x, y- 10), font, font_scale, weared_mask_font_color, thickness, cv2.LINE_AA)         
         else:
@@ -163,6 +165,7 @@ else:
                     # Wajah dan Bibir terdeteksi tetapi koordinat mulut dan hidug berada dalam koordinat wajah yang 
                     # berarti prediksi bibir benar dan orang tidak memakai masker.
                     label = "Tidak Menggunakan Masker"
+                    print(label)
                     cv2.putText(images, label, (x, y- 10), font, font_scale, not_weared_mask_font_color, thickness, cv2.LINE_AA)
 
                     #cv2.rectangle(img, (mx, my), (mx + mh, my + mw), (0, 0, 255), 3)
@@ -174,5 +177,6 @@ else:
           
 # Menampilkan hasil Akhir Deteksi
 cv2.imshow('Aminurachma: Mask Detection', images)
+print("======================================================")
 cv2.waitKey(0)
 cv2.destroyAllWindows()
